@@ -1,272 +1,921 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>白天黑夜切换按钮</title>
-	<style>
-		body{
-			transition: 0.5s;
-		}
-	</style>
-  </head>
-  <body>
-    <theme-button value="dark" id="btn" size="3"></theme-button>
-    <script>
-      document.body.style.backgroundColor = "#424242";
-      btn.addEventListener("change", e => {
-        if (e.detail === 'dark') {
-          document.body.style.backgroundColor = "#424242";
+    <title>个人空间 · 昼夜切换</title>
+    <style>
+        /* ========== 全局重置与苹果玻璃效果 ========== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Helvetica Neue', 'Segoe UI', Roboto, sans-serif;
         }
-        else {
-          document.body.style.backgroundColor = "aliceblue";
+
+        body {
+            min-height: 100vh;
+            transition: background-color 0.5s ease;
+            background-color: #f5f5f7;
+            position: relative;
+            overflow-x: hidden;
         }
-      });
-    </script>
+
+        body.dark {
+            background-color: #1c1c1e;
+        }
+
+        /* 苹果风格玻璃效果 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .glass-card {
+            background: rgba(30, 30, 35, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 右上角昼夜切换按钮容器 - 进一步调大，并调整位置避免卡边 */
+        .theme-btn-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 100px;
+            padding: 8px 20px 8px 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            width: auto;
+            min-width: 180px;
+}
+
+.theme-btn-container span {
+    color: #555;
+    font-size: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+        /* ========== 主内容 ========== */
+        .main-site {
+            min-height: 100vh;
+            padding: 5rem 2rem 7rem 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+        }
+
+        /* 头部区域 */
+        .header-card {
+            padding: 3rem;
+            border-radius: 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .name-title {
+            font-size: 4rem;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            color: #1d1d1f;
+            line-height: 1.1;
+        }
+
+        .dark .name-title {
+            color: #f0f0f4;
+        }
+
+        .bio-line {
+            font-size: 1.4rem;
+            color: #555;
+            max-width: 700px;
+        }
+
+        .dark .bio-line {
+            color: #aaa;
+        }
+
+        /* 卡片通用 */
+        .section-card {
+            padding: 2.8rem;
+            border-radius: 48px;
+        }
+
+        .section-card h2 {
+            font-size: 2.4rem;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            color: #1d1d1f;
+            letter-spacing: -0.02em;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+            padding-bottom: 1rem;
+        }
+
+        .dark .section-card h2 {
+            color: #f0f0f4;
+            border-bottom-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 项目列表 */
+        .project-list {
+            list-style: none;
+        }
+
+        .project-item {
+            padding: 1.5rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dark .project-item {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .project-item:last-child {
+            border-bottom: none;
+        }
+
+        .project-name {
+            font-size: 1.4rem;
+            color: #1d1d1f;
+        }
+
+        .dark .project-name {
+            color: #e0e0e5;
+        }
+
+        .project-year {
+            color: #888;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
+        }
+
+        .dark .project-year {
+            background: rgba(255, 255, 255, 0.1);
+            color: #aaa;
+        }
+
+        /* 兴趣标签 */
+        .interest-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+        }
+
+        .interest-tag {
+            padding: 0.8rem 1.2rem;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 40px;
+            font-size: 1.1rem;
+            color: #1d1d1f;
+            text-align: center;
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .interest-tag:hover {
+            transform: scale(1.05);
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .dark .interest-tag {
+            background: rgba(255, 255, 255, 0.1);
+            color: #d0d0da;
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        /* 时间线/经历 */
+        .timeline-item {
+            display: flex;
+            gap: 2rem;
+            padding: 1.5rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .dark .timeline-item {
+            border-bottom-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .timeline-year {
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: #007aff;
+            min-width: 100px;
+        }
+
+        .timeline-desc {
+            font-size: 1.2rem;
+            color: #1d1d1f;
+        }
+
+        .dark .timeline-desc {
+            color: #e0e0e5;
+        }
+
+        /* 滑动导航栏样式 - 可拖动滑块 */
+        .slide-nav-container {
+            position: fixed;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .slide-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(30px) saturate(200%);
+            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            border-radius: 60px;
+            padding: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            gap: 0.5rem;
+            pointer-events: auto;
+            position: relative;
+            cursor: default;
+        }
+
+        .dark .slide-nav {
+            background: rgba(30, 30, 35, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 滑动滑块 - 可拖动 */
+        .nav-slider {
+            position: absolute;
+            height: calc(100% - 1rem);
+            top: 0.5rem;
+            background: #007aff;
+            border-radius: 50px;
+            transition: left 0.2s ease;
+            z-index: 0;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+            cursor: grab;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .nav-slider:active {
+            cursor: grabbing;
+        }
+
+        .nav-item {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: color 0.2s;
+            color: #555;
+            min-width: 100px;
+            text-align: center;
+            pointer-events: auto;
+        }
+
+        .dark .nav-item {
+            color: #aaa;
+        }
+
+        .nav-item.active {
+            color: white;
+        }
+
+        .nav-icon {
+            font-size: 1.8rem;
+            line-height: 1;
+            margin-bottom: 0.2rem;
+        }
+
+        .nav-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* 内容区域切换 */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* 联系卡片 */
+        .contact-links {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .contact-item {
+            padding: 0.8rem 1.8rem;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 40px;
+            font-size: 1.2rem;
+            color: #1d1d1f;
+            text-decoration: none;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .dark .contact-item {
+            background: rgba(255, 255, 255, 0.1);
+            color: #d0d0da;
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .contact-item:hover {
+            background: #007aff;
+            color: white;
+        }
+    </style>
+</head>
+<body class="light">
+    <!-- 右上角昼夜切换按钮 -->
+    <div class="theme-btn-container">
+        <span>日夜切换</span>
+        <theme-button value="light" id="themeSwitcher" size="3"></theme-button>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="main-site">
+        <div class="content-grid">
+            <!-- 所有内容区块，由导航控制显示隐藏 -->
+            <!-- 主页 section -->
+            <div class="content-section active" id="homeSection">
+                <div class="header-card glass-card">
+                    <div class="name-title">泡面24</div>
+                    <div class="bio-line">方糖 / 老吉 / 蟑螂 / 天子 /猪妞</div>
+                </div>
+
+                <div class="section-card glass-card" style="margin-top: 2rem;">
+                    <h2>近期动态</h2>
+                    <ul class="project-list">
+                        <li class="project-item">
+                            <span class="project-name">胖头鱼拉shit遭遇厕所记者</span>
+                            <span class="project-year">本周</span>
+                        </li>
+                        <li class="project-item">
+                            <span class="project-name">阴暗爬行课造扣分周天子奖励写检讨</span>
+                            <span class="project-year">本周</span>
+                        </li>
+                        <li class="project-item">
+                            <span class="project-name">重新分组</span>
+                            <span class="project-year">本周</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 项目 section -->
+            <div class="content-section" id="projectsSection">
+                <div class="section-card glass-card">
+                    <h2>经典战役</h2>
+                    <ul class="project-list">
+                        <li class="project-item">
+                            <span class="project-name">记录老吉上厕所日常</span>
+                            <span class="project-year">2025</span>
+                        </li>
+                        <li class="project-item">
+                            <span class="project-name">老吉禁止说白痴题</span>
+                            <span class="project-year">2025</span>
+                        </li>
+                        <li class="project-item">
+                            <span class="project-name">吃泡面遭遇老吉嘲讽</span>
+                            <span class="project-year">2025</span>
+                        </li>
+                        <li class="project-item">
+                            <span class="project-name">老师币出现</span>
+                            <span class="project-year">2025</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 关于 section -->
+            <div class="content-section" id="aboutSection">
+                <div class="section-card glass-card">
+                    <h2>关于24</h2>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2026</div>
+                        <div class="timeline-desc">又是有梗的一学期</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2025</div>
+                        <div class="timeline-desc">开发老师玩法</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2025</div>
+                        <div class="timeline-desc">小学毕业，进入初中</div>
+                    </div>
+                </div>
+
+                <div class="section-card glass-card" style="margin-top: 2rem;">
+                    <h2>班级标签</h2>
+                    <div class="interest-grid">
+                        <span class="interest-tag">黄</span>
+                        <span class="interest-tag">磕学家</span>
+                        <span class="interest-tag">外号</span>
+                        <span class="interest-tag">厕所</span>
+                        <span class="interest-tag">嘲讽</span>
+                        <span class="interest-tag">闹哄哄</span>
+                        <span class="interest-tag">骂人</span>
+                        <span class="interest-tag">花里胡哨</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 联系 section -->
+            <div class="content-section" id="contactSection">
+                <div class="section-card glass-card">
+                    <h2>说明与日志</h2>
+                    <div class="timeline-item">
+                        <div class="timeline-year">2026.3.8</div>
+                        <div class="timeline-desc">发布0.1版</div>
+                    </div>
+ 
+                    <div style="margin-top: 3rem; color: #888; font-size: 1rem;">
+                        战役基本一周一更
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 滑动导航栏 - 支持拖动选择 -->
+    <div class="slide-nav-container">
+        <div class="slide-nav" id="slideNav">
+            <!-- 滑块元素 - 可拖动 -->
+            <div class="nav-slider" id="navSlider"></div>
+            
+            <div class="nav-item active" data-section="home" data-index="0">
+                <span class="nav-icon">⌂</span>
+                <span class="nav-label">主页</span>
+            </div>
+            <div class="nav-item" data-section="projects" data-index="1">
+                <span class="nav-icon">◈</span>
+                <span class="nav-label">战役</span>
+            </div>
+            <div class="nav-item" data-section="about" data-index="2">
+                <span class="nav-icon">☷</span>
+                <span class="nav-label">关于</span>
+            </div>
+            <div class="nav-item" data-section="contact" data-index="3">
+                <span class="nav-icon">✉</span>
+                <span class="nav-label">更新日志</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 昼夜切换按钮脚本 (完全移植) -->
     <script>
-      (() => {
-        const func = (root, initTheme, changeTheme) => {
-          const $ = (s) => {
-            let dom = root.querySelectorAll(s);
-            return dom.length == 1 ? dom[0] : dom;
-          };
-          let mainButton = $(".main-button");
-          let daytimeBackground = $(".daytime-background");
-          let cloud = $(".cloud");
-          let cloudList = $(".cloud-son");
-          let cloudLight = $(".cloud-light");
-          let components = $(".components");
-          let moon = $(".moon");
-          let stars = $(".stars");
-          let star = $(".star");
-          let isMoved = false;
-          let isClicked = false;
-          window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
-            toggleThemeBasedOnSystem();
-          });
-          const toggleThemeBasedOnSystem = () => {
-            if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-              if (!isMoved) {
-                components.onclick();
-              }
-            } else {
-              if (isMoved) {
-                components.onclick();
-              }
-            }
-          };
-          components.onclick = () => {
-            if (isMoved) {
-              mainButton.style.transform = "translateX(0)";
-              mainButton.style.backgroundColor = "rgba(255, 195, 35,1)";
+        (function() {
+            // 昼夜切换按钮组件
+            const func = (root, initTheme, changeTheme) => {
+                const $ = (s) => {
+                    let dom = root.querySelectorAll(s);
+                    return dom.length == 1 ? dom[0] : dom;
+                };
+                let mainButton = $(".main-button");
+                let daytimeBackground = $(".daytime-background");
+                let cloud = $(".cloud");
+                let cloudList = $(".cloud-son");
+                let cloudLight = $(".cloud-light");
+                let components = $(".components");
+                let moon = $(".moon");
+                let stars = $(".stars");
+                let star = $(".star");
+                let isMoved = false;
+                let isClicked = false;
 
-              mainButton.style.boxShadow =
-                "3em 3em 5em rgba(0, 0, 0, 0.5), inset  -3em -5em 3em -3em rgba(0, 0, 0, 0.5), inset  4em 5em 2em -2em rgba(255, 230, 80,1)";
+                window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+                    toggleThemeBasedOnSystem();
+                });
 
-              daytimeBackground[0].style.transform = "translateX(0)";
-              daytimeBackground[1].style.transform = "translateX(0)";
-              daytimeBackground[2].style.transform = "translateX(0)";
-              cloud.style.transform = "translateY(10em)";
-              cloudLight.style.transform = "translateY(10em)";
-              components.style.backgroundColor = "rgba(70, 133, 192,1)";
+                const toggleThemeBasedOnSystem = () => {
+                    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+                        if (!isMoved) components.onclick();
+                    } else {
+                        if (isMoved) components.onclick();
+                    }
+                };
+                components.onclick = () => {
+                    if (isMoved) {
+                        mainButton.style.transform = "translateX(0)";
+                        mainButton.style.backgroundColor = "rgba(255, 195, 35,1)";
+                        mainButton.style.boxShadow = "3em 3em 5em rgba(0, 0, 0, 0.5), inset -3em -5em 3em -3em rgba(0, 0, 0, 0.5), inset 4em 5em 2em -2em rgba(255, 230, 80,1)";
+                        daytimeBackground[0].style.transform = "translateX(0)";
+                        daytimeBackground[1].style.transform = "translateX(0)";
+                        daytimeBackground[2].style.transform = "translateX(0)";
+                        cloud.style.transform = "translateY(10em)";
+                        cloudLight.style.transform = "translateY(10em)";
+                        components.style.backgroundColor = "rgba(70, 133, 192,1)";
+                        moon[0].style.opacity = "0";
+                        moon[1].style.opacity = "0";
+                        moon[2].style.opacity = "0";
+                        stars.style.transform = "translateY(-125em)";
+                        stars.style.opacity = "0";
+                        changeTheme("light");
+                    } else {
+                        mainButton.style.transform = "translateX(110em)";
+                        mainButton.style.backgroundColor = "rgba(195, 200,210,1)";
+                        mainButton.style.boxShadow = "3em 3em 5em rgba(0, 0, 0, 0.5), inset -3em -5em 3em -3em rgba(0, 0, 0, 0.5), inset 4em 5em 2em -2em rgba(255, 255, 210,1)";
+                        daytimeBackground[0].style.transform = "translateX(110em)";
+                        daytimeBackground[1].style.transform = "translateX(80em)";
+                        daytimeBackground[2].style.transform = "translateX(50em)";
+                        cloud.style.transform = "translateY(80em)";
+                        cloudLight.style.transform = "translateY(80em)";
+                        components.style.backgroundColor = "rgba(25,30,50,1)";
+                        moon[0].style.opacity = "1";
+                        moon[1].style.opacity = "1";
+                        moon[2].style.opacity = "1";
+                        stars.style.transform = "translateY(-62.5em)";
+                        stars.style.opacity = "1";
+                        changeTheme("dark");
+                    }
+                    isClicked = true;
+                    setTimeout(() => { isClicked = false; }, 500);
+                    isMoved = !isMoved;
+                };
 
-              moon[0].style.opacity = "0";
-              moon[1].style.opacity = "0";
-              moon[2].style.opacity = "0";
+                mainButton.addEventListener("mousemove", function () {
+                    if (isClicked) return;
+                    if (isMoved) {
+                        mainButton.style.transform = "translateX(100em)";
+                        daytimeBackground[0].style.transform = "translateX(100em)";
+                        daytimeBackground[1].style.transform = "translateX(73em)";
+                        daytimeBackground[2].style.transform = "translateX(46em)";
+                        star[0].style.top = "10em";
+                        star[0].style.left = "36em";
+                        star[1].style.top = "40em";
+                        star[1].style.left = "87em";
+                        star[2].style.top = "26em";
+                        star[2].style.left = "16em";
+                        star[3].style.top = "38em";
+                        star[3].style.left = "63em";
+                        star[4].style.top = "20.5em";
+                        star[4].style.left = "72em";
+                        star[5].style.top = "51.5em";
+                        star[5].style.left = "35em";
+                    } else {
+                        mainButton.style.transform = "translateX(10em)";
+                        daytimeBackground[0].style.transform = "translateX(10em)";
+                        daytimeBackground[1].style.transform = "translateX(7em)";
+                        daytimeBackground[2].style.transform = "translateX(4em)";
+                        cloudList[0].style.right = "-24em";
+                        cloudList[0].style.bottom = "10em";
+                        cloudList[1].style.right = "-12em";
+                        cloudList[1].style.bottom = "-27em";
+                        cloudList[2].style.right = "17em";
+                        cloudList[2].style.bottom = "-43em";
+                        cloudList[3].style.right = "46em";
+                        cloudList[3].style.bottom = "-39em";
+                        cloudList[4].style.right = "70em";
+                        cloudList[4].style.bottom = "-65em";
+                        cloudList[5].style.right = "109em";
+                        cloudList[5].style.bottom = "-54em";
+                        cloudList[6].style.right = "-23em";
+                        cloudList[6].style.bottom = "10em";
+                        cloudList[7].style.right = "-11em";
+                        cloudList[7].style.bottom = "-26em";
+                        cloudList[8].style.right = "18em";
+                        cloudList[8].style.bottom = "-42em";
+                        cloudList[9].style.right = "47em";
+                        cloudList[9].style.bottom = "-38em";
+                        cloudList[10].style.right = "74em";
+                        cloudList[10].style.bottom = "-64em";
+                        cloudList[11].style.right = "110em";
+                        cloudList[11].style.bottom = "-55em";
+                    }
+                });
 
-              stars.style.transform = "translateY(-125em)";
-              stars.style.opacity = "0";
+                mainButton.addEventListener("mouseout", function () {
+                    if (isClicked) return;
+                    if (isMoved) {
+                        mainButton.style.transform = "translateX(110em)";
+                        daytimeBackground[0].style.transform = "translateX(110em)";
+                        daytimeBackground[1].style.transform = "translateX(80em)";
+                        daytimeBackground[2].style.transform = "translateX(50em)";
+                        star[0].style.top = "11em";
+                        star[0].style.left = "39em";
+                        star[1].style.top = "39em";
+                        star[1].style.left = "91em";
+                        star[2].style.top = "26em";
+                        star[2].style.left = "19em";
+                        star[3].style.top = "37em";
+                        star[3].style.left = "66em";
+                        star[4].style.top = "21em";
+                        star[4].style.left = "75em";
+                        star[5].style.top = "51em";
+                        star[5].style.left = "38em";
+                    } else {
+                        mainButton.style.transform = "translateX(0em)";
+                        daytimeBackground[0].style.transform = "translateX(0em)";
+                        daytimeBackground[1].style.transform = "translateX(0em)";
+                        daytimeBackground[2].style.transform = "translateX(0em)";
+                        cloudList[0].style.right = "-20em";
+                        cloudList[0].style.bottom = "10em";
+                        cloudList[1].style.right = "-10em";
+                        cloudList[1].style.bottom = "-25em";
+                        cloudList[2].style.right = "20em";
+                        cloudList[2].style.bottom = "-40em";
+                        cloudList[3].style.right = "50em";
+                        cloudList[3].style.bottom = "-35em";
+                        cloudList[4].style.right = "75em";
+                        cloudList[4].style.bottom = "-60em";
+                        cloudList[5].style.right = "110em";
+                        cloudList[5].style.bottom = "-50em";
+                        cloudList[6].style.right = "-20em";
+                        cloudList[6].style.bottom = "10em";
+                        cloudList[7].style.right = "-10em";
+                        cloudList[7].style.bottom = "-25em";
+                        cloudList[8].style.right = "20em";
+                        cloudList[8].style.bottom = "-40em";
+                        cloudList[9].style.right = "50em";
+                        cloudList[9].style.bottom = "-35em";
+                        cloudList[10].style.right = "75em";
+                        cloudList[10].style.bottom = "-60em";
+                        cloudList[11].style.right = "110em";
+                        cloudList[11].style.bottom = "-50em";
+                    }
+                });
 
-              changeTheme("light");
-            } else {
-              mainButton.style.transform = "translateX(110em)";
-              mainButton.style.backgroundColor = "rgba(195, 200,210,1)";
+                const getRandomDirection = () => {
+                    const directions = ["2em", "-2em"];
+                    return directions[Math.floor(Math.random() * directions.length)];
+                };
 
-              mainButton.style.boxShadow =
-                "3em 3em 5em rgba(0, 0, 0, 0.5), inset  -3em -5em 3em -3em rgba(0, 0, 0, 0.5), inset  4em 5em 2em -2em rgba(255, 255, 210,1)";
+                const moveElementRandomly = (element) => {
+                    const randomDirectionX = getRandomDirection();
+                    const randomDirectionY = getRandomDirection();
+                    element.style.transform = `translate(${randomDirectionX}, ${randomDirectionY})`;
+                };
 
-              daytimeBackground[0].style.transform = "translateX(110em)";
-              daytimeBackground[1].style.transform = "translateX(80em)";
-              daytimeBackground[2].style.transform = "translateX(50em)";
-              cloud.style.transform = "translateY(80em)";
-              cloudLight.style.transform = "translateY(80em)";
-              components.style.backgroundColor = "rgba(25,30,50,1)";
+                const cloudSons = root.querySelectorAll(".cloud-son");
+                setInterval(() => {
+                    cloudSons.forEach(moveElementRandomly);
+                }, 1000);
 
-              moon[0].style.opacity = "1";
-              moon[1].style.opacity = "1";
-              moon[2].style.opacity = "1";
-
-              stars.style.transform = "translateY(-62.5em)";
-              stars.style.opacity = "1";
-
-              changeTheme("dark");
-            }
-
-            isClicked = true;
-
-            setTimeout(function () {
-              isClicked = false;
-            }, 500);
-            isMoved = !isMoved;
-          };
-
-          mainButton.addEventListener("mousemove", function () {
-            if (isClicked) return;
-
-            if (isMoved) {
-              mainButton.style.transform = "translateX(100em)";
-              daytimeBackground[0].style.transform = "translateX(100em)";
-              daytimeBackground[1].style.transform = "translateX(73em)";
-              daytimeBackground[2].style.transform = "translateX(46em)";
-
-              star[0].style.top = "10em";
-              star[0].style.left = "36em";
-              star[1].style.top = "40em";
-              star[1].style.left = "87em";
-              star[2].style.top = "26em";
-              star[2].style.left = "16em";
-              star[3].style.top = "38em";
-              star[3].style.left = "63em";
-              star[4].style.top = "20.5em";
-              star[4].style.left = "72em";
-              star[5].style.top = "51.5em";
-              star[5].style.left = "35em";
-            } else {
-              mainButton.style.transform = "translateX(10em)";
-              daytimeBackground[0].style.transform = "translateX(10em)";
-              daytimeBackground[1].style.transform = "translateX(7em)";
-              daytimeBackground[2].style.transform = "translateX(4em)";
-
-              cloudList[0].style.right = "-24em";
-              cloudList[0].style.bottom = "10em";
-              cloudList[1].style.right = "-12em";
-              cloudList[1].style.bottom = "-27em";
-              cloudList[2].style.right = "17em";
-              cloudList[2].style.bottom = "-43em";
-              cloudList[3].style.right = "46em";
-              cloudList[3].style.bottom = "-39em";
-              cloudList[4].style.right = "70em";
-              cloudList[4].style.bottom = "-65em";
-              cloudList[5].style.right = "109em";
-              cloudList[5].style.bottom = "-54em";
-              cloudList[6].style.right = "-23em";
-              cloudList[6].style.bottom = "10em";
-              cloudList[7].style.right = "-11em";
-              cloudList[7].style.bottom = "-26em";
-              cloudList[8].style.right = "18em";
-              cloudList[8].style.bottom = "-42em";
-              cloudList[9].style.right = "47em";
-              cloudList[9].style.bottom = "-38em";
-              cloudList[10].style.right = "74em";
-              cloudList[10].style.bottom = "-64em";
-              cloudList[11].style.right = "110em";
-              cloudList[11].style.bottom = "-55em";
-            }
-          });
-
-          mainButton.addEventListener("mouseout", function () {
-            if (isClicked) {
-              return;
-            }
-            if (isMoved) {
-              mainButton.style.transform = "translateX(110em)";
-              daytimeBackground[0].style.transform = "translateX(110em)";
-              daytimeBackground[1].style.transform = "translateX(80em)";
-              daytimeBackground[2].style.transform = "translateX(50em)";
-
-              star[0].style.top = "11em";
-              star[0].style.left = "39em";
-              star[1].style.top = "39em";
-              star[1].style.left = "91em";
-              star[2].style.top = "26em";
-              star[2].style.left = "19em";
-              star[3].style.top = "37em";
-              star[3].style.left = "66em";
-              star[4].style.top = "21em";
-              star[4].style.left = "75em";
-              star[5].style.top = "51em";
-              star[5].style.left = "38em";
-            } else {
-              mainButton.style.transform = "translateX(0em)";
-              daytimeBackground[0].style.transform = "translateX(0em)";
-              daytimeBackground[1].style.transform = "translateX(0em)";
-              daytimeBackground[2].style.transform = "translateX(0em)";
-
-              cloudList[0].style.right = "-20em";
-              cloudList[0].style.bottom = "10em";
-              cloudList[1].style.right = "-10em";
-              cloudList[1].style.bottom = "-25em";
-              cloudList[2].style.right = "20em";
-              cloudList[2].style.bottom = "-40em";
-              cloudList[3].style.right = "50em";
-              cloudList[3].style.bottom = "-35em";
-              cloudList[4].style.right = "75em";
-              cloudList[4].style.bottom = "-60em";
-              cloudList[5].style.right = "110em";
-              cloudList[5].style.bottom = "-50em";
-              cloudList[6].style.right = "-20em";
-              cloudList[6].style.bottom = "10em";
-              cloudList[7].style.right = "-10em";
-              cloudList[7].style.bottom = "-25em";
-              cloudList[8].style.right = "20em";
-              cloudList[8].style.bottom = "-40em";
-              cloudList[9].style.right = "50em";
-              cloudList[9].style.bottom = "-35em";
-              cloudList[10].style.right = "75em";
-              cloudList[10].style.bottom = "-60em";
-              cloudList[11].style.right = "110em";
-              cloudList[11].style.bottom = "-50em";
-            }
-          });
-
-          const getRandomDirection = () => {
-            const directions = ["2em", "-2em"];
-            return directions[Math.floor(Math.random() * directions.length)];
-          };
-
-          const moveElementRandomly = (element) => {
-            const randomDirectionX = getRandomDirection();
-            const randomDirectionY = getRandomDirection();
-            element.style.transform = `translate(${randomDirectionX}, ${randomDirectionY})`;
-          };
-
-          const cloudSons = root.querySelectorAll(".cloud-son");
-          setInterval(() => {
-            cloudSons.forEach(moveElementRandomly);
-          }, 1000);
-
-          if (initTheme === "dark") {
-            components.onclick();
-          }
-        };
-
-        class ThemeButton extends HTMLElement {
-          constructor() {
-            super();
-          }
-          connectedCallback() {
-            const initTheme = this.getAttribute("value") || "light";
-            const size = +this.getAttribute("size") || 3;
-            const shadow = this.attachShadow({ mode: "closed" });
-            const container = document.createElement("div");
-            container.setAttribute("class", "container");
-            container.setAttribute("style", `font-size: ${(size / 3).toFixed(2)}px`);
-            container.innerHTML =
-              '<div class="components"><div class="main-button"><div class="moon"></div><div class="moon"></div><div class="moon"></div></div><div class="daytime-background"></div><div class="daytime-background"></div><div class="daytime-background"></div><div class="cloud"><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div></div><div class="cloud-light"><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div></div><div class="stars"><div class="star big"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star big"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star medium"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star medium"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star small"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star small"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div></div></div>';
-            const style = document.createElement("style");
-            style.textContent =
-              "* { margin: 0; padding: 0; transition: 0.7s; -webkit-tap-highlight-color:rgba(0,0,0,0); } .container { position: absolute;top: 50%;left: 50%;margin-top: -35em;margin-left: -90em;width: 180em; height: 70em; display: inline-block; vertical-align: bottom; transform: translate3d(0, 0, 0); } .components{ position:fixed; width: 180em; height: 70em; background-color: rgba(70, 133, 192,1); border-radius: 100em; box-shadow: inset 0 0 5em 3em rgba(0, 0, 0, 0.5); overflow: hidden; transition: 0.7s; transition-timing-function: cubic-bezier( 0,0.5, 1,1); cursor: pointer; } .main-button{ margin: 7.5em 0 0 7.5em; width: 55em; height:55em; background-color: rgba(255, 195, 35,1); border-radius: 50%; box-shadow:3em 3em 5em rgba(0, 0, 0, 0.5), inset -3em -5em 3em -3em rgba(0, 0, 0, 0.5), inset 4em 5em 2em -2em rgba(255, 230, 80,1); transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .moon{ position: absolute; background-color: rgba(150, 160, 180, 1); box-shadow:inset 0em 0em 1em 1em rgba(0, 0, 0, 0.3) ; border-radius: 50%; transition: 0.5s; opacity: 0; } .moon:nth-child(1){ top: 7.5em; left: 25em; width: 12.5em; height: 12.5em; } .moon:nth-child(2){ top: 20em; left: 7.5em; width: 20em; height: 20em; } .moon:nth-child(3){ top: 32.5em; left: 32.5em; width: 12.5em; height: 12.5em; } .daytime-background { position: absolute; border-radius: 50%; transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .daytime-background:nth-child(2){ top: -20em; left: -20em; width: 110em; height:110em; background-color: rgba(255, 255, 255,0.2); z-index: -2; } .daytime-background:nth-child(3){ top: -32.5em; left: -17.5em; width: 135em; height:135em; background-color: rgba(255, 255, 255,0.1); z-index: -3; } .daytime-background:nth-child(4){ top: -45em; left: -15em; width: 160em; height:160em; background-color: rgba(255, 255, 255,0.05); z-index: -4; } .cloud,.cloud-light{ transform: translateY(10em); transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .cloud-son{ position: absolute; background-color: #fff; border-radius: 50%; z-index: -1; transition: transform 6s,right 1s,bottom 1s; } .cloud-son:nth-child(6n+1){ right: -20em; bottom: 10em; width: 50em; height: 50em; } .cloud-son:nth-child(6n+2) { right: -10em; bottom: -25em; width: 60em; height: 60em; } .cloud-son:nth-child(6n+3) { right: 20em; bottom: -40em; width: 60em; height: 60em; } .cloud-son:nth-child(6n+4) { right: 50em; bottom: -35em; width: 60em; height: 60em; } .cloud-son:nth-child(6n+5) { right: 75em; bottom: -60em; width: 75em; height: 75em; } .cloud-son:nth-child(6n+6) { right: 110em; bottom: -50em; width: 60em; height: 60em; } .cloud{ z-index: -2; } .cloud-light{ position: absolute; right: 0em; bottom: 25em; opacity: 0.5; z-index: -3; /*transform: rotate(-5deg);*/ } .stars{ transform: translateY(-125em); z-index: -2; transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .big { --size: 7.5em; } .medium { --size: 5em; } .small { --size: 3em; } .star { position: absolute; width: calc(2*var(--size)); height: calc(2*var(--size)); } .star:nth-child(1){ top: 11em; left: 39em; animation-name: star; animation-duration: 3.5s; } .star:nth-child(2){ top: 39em; left: 91em; animation-name: star; animation-duration: 4.1s; } .star:nth-child(3){ top: 26em; left: 19em; animation-name: star; animation-duration: 4.9s; } .star:nth-child(4){ top: 37em; left: 66em; animation-name: star; animation-duration: 5.3s; } .star:nth-child(5){ top: 21em; left: 75em; animation-name: star; animation-duration: 3s; } .star:nth-child(6){ top: 51em; left: 38em; animation-name: star; animation-duration: 2.2s; } @keyframes star { 0%,20%{ transform: scale(0); } 20%,100% { transform: scale(1); } } .star-son{ float: left; } .star-son:nth-child(1) { --pos: left 0; } .star-son:nth-child(2) { --pos: right 0; } .star-son:nth-child(3) { --pos: 0 bottom; } .star-son:nth-child(4) { --pos: right bottom; } .star-son { width: var(--size); height: var(--size); background-image: radial-gradient(circle var(--size) at var(--pos), transparent var(--size), #fff); } .star{ transform: scale(1); transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); transition: 1s; animation-iteration-count:infinite; animation-direction: alternate; animation-timing-function: linear; } .twinkle { transform: scale(0); }";
-            const changeTheme = (detail) => {
-              this.dispatchEvent(new CustomEvent("change", { detail }));
+                if (initTheme === "dark") components.onclick();
             };
-            func(container, initTheme, changeTheme);
-            shadow.appendChild(style);
-            shadow.appendChild(container);
-          }
-        }
 
-        customElements.define("theme-button", ThemeButton);
-      })();
+            class ThemeButton extends HTMLElement {
+                constructor() { super(); }
+                connectedCallback() {
+                    const initTheme = this.getAttribute("value") || "light";
+                    const size = +this.getAttribute("size") || 3;
+                    const shadow = this.attachShadow({ mode: "closed" });
+                    const container = document.createElement("div");
+                    container.setAttribute("class", "container");
+                    container.setAttribute("style", `font-size: ${(size / 3).toFixed(2)}px`);
+                    container.innerHTML = '<div class="components"><div class="main-button"><div class="moon"></div><div class="moon"></div><div class="moon"></div></div><div class="daytime-background"></div><div class="daytime-background"></div><div class="daytime-background"></div><div class="cloud"><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div></div><div class="cloud-light"><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div><div class="cloud-son"></div></div><div class="stars"><div class="star big"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star big"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star medium"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star medium"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star small"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div><div class="star small"><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div><div class="star-son"></div></div></div></div>';
+                    const style = document.createElement("style");
+                    style.textContent = "* { margin: 0; padding: 0; transition: 0.7s; -webkit-tap-highlight-color:rgba(0,0,0,0); } .container { position: absolute;top: 50%;left: 50%;margin-top: -35em;margin-left: -90em;width: 180em; height: 70em; display: inline-block; vertical-align: bottom; transform: translate3d(0, 0, 0); } .components{ position:fixed; width: 180em; height: 70em; background-color: rgba(70, 133, 192,1); border-radius: 100em; box-shadow: inset 0 0 5em 3em rgba(0, 0, 0, 0.5); overflow: hidden; transition: 0.7s; transition-timing-function: cubic-bezier( 0,0.5, 1,1); cursor: pointer; } .main-button{ margin: 7.5em 0 0 7.5em; width: 55em; height:55em; background-color: rgba(255, 195, 35,1); border-radius: 50%; box-shadow:3em 3em 5em rgba(0, 0, 0, 0.5), inset -3em -5em 3em -3em rgba(0, 0, 0, 0.5), inset 4em 5em 2em -2em rgba(255, 230, 80,1); transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .moon{ position: absolute; background-color: rgba(150, 160, 180, 1); box-shadow:inset 0em 0em 1em 1em rgba(0, 0, 0, 0.3) ; border-radius: 50%; transition: 0.5s; opacity: 0; } .moon:nth-child(1){ top: 7.5em; left: 25em; width: 12.5em; height: 12.5em; } .moon:nth-child(2){ top: 20em; left: 7.5em; width: 20em; height: 20em; } .moon:nth-child(3){ top: 32.5em; left: 32.5em; width: 12.5em; height: 12.5em; } .daytime-background { position: absolute; border-radius: 50%; transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .daytime-background:nth-child(2){ top: -20em; left: -20em; width: 110em; height:110em; background-color: rgba(255, 255, 255,0.2); z-index: -2; } .daytime-background:nth-child(3){ top: -32.5em; left: -17.5em; width: 135em; height:135em; background-color: rgba(255, 255, 255,0.1); z-index: -3; } .daytime-background:nth-child(4){ top: -45em; left: -15em; width: 160em; height:160em; background-color: rgba(255, 255, 255,0.05); z-index: -4; } .cloud,.cloud-light{ transform: translateY(10em); transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .cloud-son{ position: absolute; background-color: #fff; border-radius: 50%; z-index: -1; transition: transform 6s,right 1s,bottom 1s; } .cloud-son:nth-child(6n+1){ right: -20em; bottom: 10em; width: 50em; height: 50em; } .cloud-son:nth-child(6n+2) { right: -10em; bottom: -25em; width: 60em; height: 60em; } .cloud-son:nth-child(6n+3) { right: 20em; bottom: -40em; width: 60em; height: 60em; } .cloud-son:nth-child(6n+4) { right: 50em; bottom: -35em; width: 60em; height: 60em; } .cloud-son:nth-child(6n+5) { right: 75em; bottom: -60em; width: 75em; height: 75em; } .cloud-son:nth-child(6n+6) { right: 110em; bottom: -50em; width: 60em; height: 60em; } .cloud{ z-index: -2; } .cloud-light{ position: absolute; right: 0em; bottom: 25em; opacity: 0.5; z-index: -3; } .stars{ transform: translateY(-125em); z-index: -2; transition: 1.0s; transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); } .big { --size: 7.5em; } .medium { --size: 5em; } .small { --size: 3em; } .star { position: absolute; width: calc(2*var(--size)); height: calc(2*var(--size)); } .star:nth-child(1){ top: 11em; left: 39em; animation-name: star; animation-duration: 3.5s; } .star:nth-child(2){ top: 39em; left: 91em; animation-name: star; animation-duration: 4.1s; } .star:nth-child(3){ top: 26em; left: 19em; animation-name: star; animation-duration: 4.9s; } .star:nth-child(4){ top: 37em; left: 66em; animation-name: star; animation-duration: 5.3s; } .star:nth-child(5){ top: 21em; left: 75em; animation-name: star; animation-duration: 3s; } .star:nth-child(6){ top: 51em; left: 38em; animation-name: star; animation-duration: 2.2s; } @keyframes star { 0%,20%{ transform: scale(0); } 20%,100% { transform: scale(1); } } .star-son{ float: left; } .star-son:nth-child(1) { --pos: left 0; } .star-son:nth-child(2) { --pos: right 0; } .star-son:nth-child(3) { --pos: 0 bottom; } .star-son:nth-child(4) { --pos: right bottom; } .star-son { width: var(--size); height: var(--size); background-image: radial-gradient(circle var(--size) at var(--pos), transparent var(--size), #fff); } .star{ transform: scale(1); transition-timing-function: cubic-bezier(0.56, 1.35, 0.52, 1.00); transition: 1s; animation-iteration-count:infinite; animation-direction: alternate; animation-timing-function: linear; } .twinkle { transform: scale(0); }";
+                    const changeTheme = (detail) => {
+                        this.dispatchEvent(new CustomEvent("change", { detail }));
+                    };
+                    func(container, initTheme, changeTheme);
+                    shadow.appendChild(style);
+                    shadow.appendChild(container);
+                }
+            }
+            customElements.define("theme-button", ThemeButton);
+        })();
+
+        // ========== 导航切换 & 昼夜联动 & 拖动滑块 ==========
+        (function() {
+            const themeSwitcher = document.getElementById('themeSwitcher');
+            const body = document.body;
+            const navItems = Array.from(document.querySelectorAll('.nav-item'));
+            const sections = {
+                home: document.getElementById('homeSection'),
+                projects: document.getElementById('projectsSection'),
+                about: document.getElementById('aboutSection'),
+                contact: document.getElementById('contactSection')
+            };
+            const navSlider = document.getElementById('navSlider');
+            const slideNav = document.getElementById('slideNav');
+            
+            let isDragging = false;
+            let startX = 0;
+            let startLeft = 0;
+            let currentIndex = 0; // 当前选中的索引
+
+            // 获取所有导航项的位置信息
+            function getItemPositions() {
+                const navRect = slideNav.getBoundingClientRect();
+                return navItems.map(item => {
+                    const rect = item.getBoundingClientRect();
+                    return {
+                        left: rect.left - navRect.left,
+                        right: rect.right - navRect.left,
+                        width: rect.width,
+                        element: item
+                    };
+                });
+            }
+
+            // 根据滑块左侧位置确定当前选中项
+            function getIndexFromLeft(left, itemPositions) {
+                const sliderCenter = left + (parseFloat(navSlider.style.width) || 100) / 2;
+                for (let i = 0; i < itemPositions.length; i++) {
+                    const pos = itemPositions[i];
+                    if (sliderCenter >= pos.left && sliderCenter <= pos.right) {
+                        return i;
+                    }
+                }
+                // 如果不在任何项内，返回最近的那个
+                let minDist = Infinity;
+                let closestIndex = 0;
+                itemPositions.forEach((pos, idx) => {
+                    const dist = Math.abs(sliderCenter - (pos.left + pos.width / 2));
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestIndex = idx;
+                    }
+                });
+                return closestIndex;
+            }
+
+            // 更新滑块位置
+            function updateSliderPosition(left, width) {
+                navSlider.style.left = left + 'px';
+                navSlider.style.width = width + 'px';
+            }
+
+            // 切换到指定索引的页面
+            function switchToIndex(index) {
+                if (index < 0 || index >= navItems.length) return;
+                
+                const item = navItems[index];
+                const section = item.dataset.section;
+                
+                // 更新active类
+                navItems.forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+                
+                // 更新内容区域
+                Object.values(sections).forEach(s => s.classList.remove('active'));
+                if (sections[section]) {
+                    sections[section].classList.add('active');
+                }
+                
+                currentIndex = index;
+            }
+
+            // 拖动开始
+            function onDragStart(e) {
+                e.preventDefault();
+                // 阻止事件冒泡，避免干扰点击
+                e.stopPropagation();
+                
+                isDragging = true;
+                startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+                startLeft = parseFloat(navSlider.style.left) || 0;
+                
+                document.addEventListener('mousemove', onDragMove);
+                document.addEventListener('mouseup', onDragEnd);
+                document.addEventListener('touchmove', onDragMove, { passive: false });
+                document.addEventListener('touchend', onDragEnd);
+                document.addEventListener('touchcancel', onDragEnd);
+            }
+
+            // 拖动中
+            function onDragMove(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                
+                const currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+                const deltaX = currentX - startX;
+                
+                const navRect = slideNav.getBoundingClientRect();
+                const sliderWidth = parseFloat(navSlider.style.width) || 100;
+                
+                // 计算新位置，限制边界
+                let newLeft = startLeft + deltaX;
+                const maxLeft = navRect.width - sliderWidth - 0; // 减去内边距影响
+                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                
+                navSlider.style.left = newLeft + 'px';
+                
+                // 实时根据滑块位置确定高亮项
+                const positions = getItemPositions();
+                const newIndex = getIndexFromLeft(newLeft, positions);
+                
+                // 更新高亮，但不切换内容（拖动过程中只预览，松手再切换）
+                navItems.forEach((item, idx) => {
+                    if (idx === newIndex) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            }
+
+            // 拖动结束
+            function onDragEnd(e) {
+                if (!isDragging) return;
+                
+                // 确定最终位置，切换到最近的项
+                const newLeft = parseFloat(navSlider.style.left);
+                const positions = getItemPositions();
+                const newIndex = getIndexFromLeft(newLeft, positions);
+                
+                // 切换到目标索引
+                switchToIndex(newIndex);
+                
+                // 将滑块对齐到选中项
+                const targetPos = positions[newIndex];
+                updateSliderPosition(targetPos.left, targetPos.width);
+                
+                // 清理事件监听
+                document.removeEventListener('mousemove', onDragMove);
+                document.removeEventListener('mouseup', onDragEnd);
+                document.removeEventListener('touchmove', onDragMove);
+                document.removeEventListener('touchend', onDragEnd);
+                document.removeEventListener('touchcancel', onDragEnd);
+                
+                isDragging = false;
+            }
+
+            // 点击导航项
+            navItems.forEach((item, index) => {
+                item.addEventListener('click', (e) => {
+                    // 如果正在拖动，忽略点击
+                    if (isDragging) return;
+                    
+                    switchToIndex(index);
+                    
+                    // 更新滑块位置
+                    const positions = getItemPositions();
+                    updateSliderPosition(positions[index].left, positions[index].width);
+                });
+            });
+
+            // 初始化滑块位置（默认选中第一个）
+            setTimeout(() => {
+                const positions = getItemPositions();
+                if (positions.length > 0) {
+                    updateSliderPosition(positions[0].left, positions[0].width);
+                }
+            }, 100);
+
+            // 窗口大小改变时重新计算滑块位置
+            window.addEventListener('resize', () => {
+                const activeIndex = navItems.findIndex(item => item.classList.contains('active'));
+                if (activeIndex >= 0) {
+                    const positions = getItemPositions();
+                    if (positions[activeIndex]) {
+                        updateSliderPosition(positions[activeIndex].left, positions[activeIndex].width);
+                    }
+                }
+            });
+
+            // 给滑块添加拖动事件
+            navSlider.addEventListener('mousedown', onDragStart);
+            navSlider.addEventListener('touchstart', onDragStart, { passive: false });
+
+            // 昼夜切换
+            themeSwitcher.addEventListener('change', (e) => {
+                if (e.detail === 'dark') {
+                    body.classList.add('dark');
+                    body.classList.remove('light');
+                } else {
+                    body.classList.remove('dark');
+                    body.classList.add('light');
+                }
+            });
+        })();
     </script>
-  </body>
+</body>
 </html>
